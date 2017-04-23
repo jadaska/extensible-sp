@@ -24,12 +24,12 @@ instance SumClass a a where
   peek = Just
   lft  = id
 
-instance {-# OVERLAPS #-} SumClass (a :|: b) b where
+instance {-# INCOHERENT #-} SumClass (a :|: b) b where
   peek (DataR x) = Just x
   peek _ = Nothing
   lft = DataR
 
-instance {-# OVERLAPS #-} (SumClass c a) => SumClass (c :|: b) a where
+instance {-# INCOHERENT #-} (SumClass c a) => SumClass (c :|: b) a where
   peek (DataL x) = peek x
   peek _ = Nothing
   lft = DataL . lft
