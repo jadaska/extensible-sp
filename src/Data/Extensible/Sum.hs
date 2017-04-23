@@ -40,9 +40,9 @@ instance SumClass (Maybe a) a where
    lft  = Just
 
 
-instance SumClass (Either a b) a where
-   peek (Left x) = Just x
+instance SumClass (Either a b) b where
+   peek (Right x) = Just x
    peek _ = Nothing
-   lft  = Left
+   lft  = Right
 
 
