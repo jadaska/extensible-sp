@@ -32,11 +32,11 @@ instance ProductClass a a where
   grab = id
   stash x _ = x
 
-instance {-# OVERLAPS #-} ProductClass (a :&: b) b where
+instance {-# INCOHERENT #-} ProductClass (a :&: b) b where
   grab (Prod x y) = y
   stash y (Prod xx yy) = Prod xx y
 
-instance {-# OVERLAPS #-} ProductClass c a => ProductClass (c :&: b) a where
+instance {-# INCOHERENT #-} ProductClass c a => ProductClass (c :&: b) a where
   grab (Prod x y) = grab x
   stash x (Prod xx yy) = Prod (stash x xx) yy
 
