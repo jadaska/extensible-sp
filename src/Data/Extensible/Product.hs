@@ -6,6 +6,7 @@
 
 module Data.Extensible.Product where
 
+import Data.Monoid 
 import Control.Lens(Lens', lens)
 
 
@@ -39,6 +40,10 @@ instance {-# INCOHERENT #-} ProductClass (a :&: b) b where
 instance {-# INCOHERENT #-} ProductClass c a => ProductClass (c :&: b) a where
   grab (Prod x y) = grab x
   stash x (Prod xx yy) = Prod (stash x xx) yy
+
+instance (Monoid a, Monoid b) => Monoid (a :&: b) where
+  mempty = Prod mempty mempty
+  mappend (Prod x1 x2) (Prod y1 y2) = Prod (x1 <> y1) (x2 <> y2)
 
 instance ProductClass (a,b) a where
   grab = fst
