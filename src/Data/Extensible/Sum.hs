@@ -3,10 +3,16 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 
 module Data.Extensible.Sum where
 
+import Data.Typeable
 import Control.Lens(prism', Prism')
+import Control.Monad
 
 data (a :|: b) = DataL a | DataR b deriving (Show, Eq)
 
@@ -44,5 +50,8 @@ instance SumClass (Either a b) b where
    peek (Right x) = Just x
    peek _ = Nothing
    lft  = Right
+
+
+
 
 

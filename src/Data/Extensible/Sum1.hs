@@ -6,11 +6,11 @@
 
 module Data.Extensible.Sum1 where
 
-data (f :||: g) a b = InL (f a b) | InR (g a b)
+data (f :||: g) a = InL (f a) | InR (g a)
 
 class Sum1 c s where
-  peek1 :: c a b -> Maybe (s a b)
-  lft1  :: s a b -> c a b
+  peek1 :: c a -> Maybe (s a)
+  lft1  :: s a -> c a
 
 type (w :>||: a) = (Sum1 w a)
 
@@ -26,7 +26,13 @@ instance {-# OVERLAPS #-} Sum1 (f :||: g) g where
 instance {-# OVERLAPS #-} (c :>||: a) => Sum1 (c :||: b) a where
   peek1 (InL x) = peek1 x
   peek1 _ = Nothing
-  lft1 = InL . lft1  
+  lft1 = InL . lft1
+
+ajoin :: (m1 a -> b) -> (m2 a -> b) -> ((m1 :||: m2) a -> b)
+ajoin f1 _  (InL m) = f1 m
+ajoin _  f2 (InR m) = f2 m
+
+
 
 
 
