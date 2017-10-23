@@ -6,7 +6,13 @@
 
 module Data.Extensible.Sum1 where
 
-data (f :||: g) a = InL (f a) | InR (g a)
+data (f :||: g) a = InL (f a) | InR (g a) deriving (Eq)
+
+
+instance (Show (f a), Show (g a)) => Show ((f :||: g) a) where
+  show (InL x) = show x
+  show (InR x) = show x
+
 
 class Sum1 c s where
   peek1 :: c a -> Maybe (s a)

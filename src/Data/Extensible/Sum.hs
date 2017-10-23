@@ -14,7 +14,12 @@ import Data.Typeable
 import Control.Lens(prism', Prism')
 import Control.Monad
 
-data (a :|: b) = DataL a | DataR b deriving (Show, Eq)
+data (a :|: b) = DataL a | DataR b deriving (Eq)
+
+instance (Show a, Show b) => Show (a :|: b) where
+  show (DataL a) = show a
+  show (DataR a) = show a
+
 
 class SumClass c s where
   peek :: c -> Maybe s

@@ -8,6 +8,11 @@ module Data.Extensible.Sum2 where
 
 data (f :+: g) a b = InL (f a b) | InR (g a b)
 
+instance (Show (f a b), Show (g a b)) => Show ((f :+: g) a b) where
+  show (InL x) = show x
+  show (InR x) = show x
+
+
 class Sum2 c s where
   peek2 :: c a b -> Maybe (s a b)
   lft2  :: s a b -> c a b
