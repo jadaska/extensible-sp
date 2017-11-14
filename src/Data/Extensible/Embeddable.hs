@@ -9,10 +9,11 @@
 
 module Data.Extensible.Embeddable where
 
-import Data.Extensible.Sum
-import Data.Extensible.Sum1
-import Data.Extensible.Sum2((:>+:), (:+:))
+import           Control.Monad (mplus)
+import           Data.Extensible.Sum
+import           Data.Extensible.Sum1
 import qualified Data.Extensible.Sum2 as S
+import           Data.Extensible.Sum2 ((:>+:), (:+:))
 
 class Embeddable a b where
   embed :: a -> b
@@ -35,9 +36,6 @@ instance {-# INCOHERENT #-} (Embeddable (a x) (c x), Embeddable (b x) (c x)) => 
   embed (InR x) = embed x
 
 
-
-
-
 instance {-# INCOHERENT #-} (b :>+: a) => Embeddable (a x y) (b x y) where
   embed = S.lft2
 
@@ -45,3 +43,21 @@ instance {-# INCOHERENT #-} (Embeddable (a x y) (c x y), Embeddable (b x y) (c x
   embed (S.InL x) = embed x
   embed (S.InR x) = embed x
 
+
+
+class Projectable a b where
+  project :: a -> Maybe b
+
+instance {-# INCOHERENT #-} (b :>|: a) => Projectable b a where
+  project = peek
+
+instance {-# INCOHERENT #-} (Projectable c a, Projectable c b) => Projectable c (a :|: b) where
+  project y = (DataL <$> project y) `mplus` (DataR <$> project y)
+
+
+instance {-# INCOHERENT #-} (b :>||: a) => Projectable (b x) (a x) where
+  project = peek1
+
+instance {-# INCOHERENT #-} (Projectable (c x) (a x), Projectable (c x) (b x))
+  => Projectable (c x) ((a :||: b) x) where
+  project y = (InL <$> project y) `mplus` (InR <$> project y)

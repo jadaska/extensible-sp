@@ -37,6 +37,9 @@ class Sum1 c s where
 
 type (w :>||: a) = (Sum1 w a)
 
+
+
+
 instance Sum1 f f where
   peek1 = Just
   lft1 = id
