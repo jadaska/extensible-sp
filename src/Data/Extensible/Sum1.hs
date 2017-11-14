@@ -45,12 +45,12 @@ instance Sum1 f f where
   peek1 = Just
   lft1 = id
 
-instance {-# OVERLAPS #-} Sum1 (f :||: g) g where
+instance {-# INCOHERENT #-} Sum1 (f :||: g) g where
   peek1 (InR f) = Just f
   peek1 _ = Nothing
   lft1 = InR
 
-instance {-# OVERLAPS #-} (c :>||: a) => Sum1 (c :||: b) a where
+instance {-# INCOHERENT #-} (c :>||: a) => Sum1 (c :||: b) a where
   peek1 (InL x) = peek1 x
   peek1 _ = Nothing
   lft1 = InL . lft1
