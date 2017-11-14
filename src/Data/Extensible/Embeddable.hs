@@ -55,9 +55,25 @@ instance {-# INCOHERENT #-} (Projectable c a, Projectable c b) => Projectable c 
   project y = (DataL <$> project y) `mplus` (DataR <$> project y)
 
 
+
+
 instance {-# INCOHERENT #-} (b :>||: a) => Projectable (b x) (a x) where
   project = peek1
 
 instance {-# INCOHERENT #-} (Projectable (c x) (a x), Projectable (c x) (b x))
   => Projectable (c x) ((a :||: b) x) where
   project y = (InL <$> project y) `mplus` (InR <$> project y)
+
+
+-- higher kinded projectable class
+class Projectable1 a b where
+  project1 :: a x -> Maybe (b x)
+
+
+instance {-# INCOHERENT #-} (b :>||: a) => Projectable1 b a where
+  project1 = peek1
+
+
+instance {-# INCOHERENT #-} (Projectable1 c a, Projectable1 c b)
+  => Projectable1 c  (a :||: b) where
+  project1 y = (InL <$> project1 y) `mplus` (InR <$> project1 y)
