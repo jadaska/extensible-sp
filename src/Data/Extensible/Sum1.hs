@@ -6,8 +6,25 @@
 
 module Data.Extensible.Sum1 where
 
+import Control.Lens
+
 data (f :||: g) a = InL (f a) | InR (g a) deriving (Eq)
 
+_InL :: Prism' ( (f :||: g) a) (f a)
+_InL = prism' InL fxn
+  where
+    fxn (InL x) = Just x
+    fxn _ = Nothing
+
+_InR :: Prism' ( (f :||: g) a) (g a)
+_InR = prism' InR fxn
+  where
+    fxn (InR x) = Just x
+    fxn _ = Nothing
+
+instance (Functor f, Functor g) => Functor (f :||: g) where
+  fmap h (InL x) = InL $ h <$> x
+  fmap h (InR x) = InR $ h <$> x
 
 instance (Show (f a), Show (g a)) => Show ((f :||: g) a) where
   show (InL x) = show x

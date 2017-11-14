@@ -59,4 +59,3 @@ instance SumClass (Either a b) b where
 
 
 
-
