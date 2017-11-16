@@ -27,6 +27,16 @@ instance (Functor f, Functor g) => Functor (f :||: g) where
   fmap h (InL x) = InL $ h <$> x
   fmap h (InR x) = InR $ h <$> x
 
+instance (Foldable f, Foldable g) => Foldable (f :||: g) where
+  foldMap f (InL x) = foldMap f x
+  foldMap f (InR x) = foldMap f x
+
+instance (Traversable f, Traversable g) => Traversable (f :||: g) where
+  traverse h (InL x) = InL <$> traverse h x
+  traverse h (InR x) = InR <$> traverse h x
+
+
+
 instance (Show (f a), Show (g a)) => Show ((f :||: g) a) where
   show (InL x) = show x
   show (InR x) = show x
