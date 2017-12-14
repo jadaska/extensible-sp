@@ -26,8 +26,6 @@ instance {-# INCOHERENT #-} (Embeddable a c, Embeddable b c) => Embeddable (a :|
   embed (DataL x) = embed x
   embed (DataR x) = embed x
 
-
-
 instance {-# INCOHERENT #-} (b :>||: a) => Embeddable (a x) (b x) where
   embed = lft1
 

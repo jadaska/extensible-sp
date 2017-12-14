@@ -4,10 +4,12 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE IncoherentInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.Extensible.Sum1 where
 
 import Control.Lens
+import Data.Functor.Classes
 
 data (f :||: g) a = InL (f a) | InR (g a) deriving (Eq)
 
@@ -22,6 +24,35 @@ _InR = prism' InR fxn
   where
     fxn (InR x) = Just x
     fxn _ = Nothing
+
+instance (Eq1 f, Eq1 g) => Eq1 (f :||: g) where
+  liftEq fxn x y 
+    | Just (x :: f a) <- peek1 x,
+      Just (y :: f b) <- peek1 y = liftEq fxn x y
+
+    | Just (x :: g a) <- peek1 x,
+      Just (y :: g b) <- peek1 y = liftEq fxn x y
+
+    | otherwise = False
+
+instance (Ord1 f, Ord1 g) => Ord1 (f :||: g) where
+  liftCompare fxn x y 
+    | Just (x :: f a) <- peek1 x,
+      Just (y :: f b) <- peek1 y = liftCompare fxn x y
+
+    | Just (x :: g a) <- peek1 x,
+      Just (y :: g b) <- peek1 y = liftCompare fxn x y
+
+    | Just (x :: f a) <- peek1 x,
+      Just (y :: g b) <- peek1 y = LT
+
+    | Just (x :: g a) <- peek1 x,
+      Just (y :: f b) <- peek1 y = GT
+
+
+
+
+
 
 instance (Functor f, Functor g) => Functor (f :||: g) where
   fmap h (InL x) = InL $ h <$> x

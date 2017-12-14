@@ -14,11 +14,26 @@ import Data.Typeable
 import Control.Lens(prism', Prism')
 import Control.Monad
 
-data (a :|: b) = DataL a | DataR b deriving (Eq)
+data (a :|: b) = DataL a | DataR b deriving (Eq, Ord)
 
 instance (Show a, Show b) => Show (a :|: b) where
   show (DataL a) = show a
   show (DataR a) = show a
+
+
+-- instance (Ord a, Ord b) => Ord (a :|: b) where
+--   compare x y 
+--     | Just (x1 :: a) <- peek x,
+--       Just (y1 :: a) <- peek y = compare x1 y1
+
+--     | Just (x1 :: b) <- peek x,
+--       Just (y1 :: b) <- peek y = compare x1 y1
+
+--     | Just (_ :: a) <- peek x,
+--       Just (_ :: b) <- peek y = LT
+
+--     | Just (_ :: b) <- peek x,
+--       Just (_ :: a) <- peek y = GT
 
 
 class SumClass c s where
