@@ -103,7 +103,7 @@ instance (Typeable a,  BlankHead rest) => BlankHead (a ': rest) where
 
 
 -- | Sum class
-instance (Typeable c, BlankTail rest) => SumClass (Alt' 'Ahead (c ': rest)) c where
+instance {-# INCOHERENT #-} (Typeable c, BlankTail rest) => SumClass (Alt' 'Ahead (c ': rest)) c where
   peek (Cur x _)   = Just x
   peek (Blank _ _) = Nothing
   lft x = Cur x blankTail 
@@ -112,7 +112,7 @@ instance (Typeable c, BlankTail rest) => SumClass (Alt' 'Ahead (c ': rest)) c wh
 --    peek (Cur x _)  = Just x
 --    lft x = Cur x ANil -- HLast x 
 
-instance (Typeable a, Typeable c, SumClass (Alt' 'Ahead p) c) => SumClass (Alt' 'Ahead (a ': p)) c where
+instance {-# INCOHERENT #-} (Typeable a, Typeable c, SumClass (Alt' 'Ahead p) c) => SumClass (Alt' 'Ahead (a ': p)) c where
   peek (Blank _ xs) = peek xs
   lft x = Blank (Proxy :: Proxy a) $ lft x
 
