@@ -19,9 +19,10 @@ import Control.Lens(prism', Prism')
 import Control.Monad
 import Data.Monoid((<>))
 import Data.Promotion.Prelude.List
-import Data.Promotion.TH
+-- import Data.Promotion.TH
 import Data.Typeable
 import GHC.Exts(Constraint)
+import Data.Extensible.Type
 import Unsafe.Coerce(unsafeCoerce)
 
 
@@ -32,12 +33,10 @@ class SumClass c s where
 -- | SumClass constraint syntactic sugar
 type (w :>|: a)  = (SumClass w a)
 
-type NoConstr = (() :: Constraint)
 
 type family (>|) x p where
   (>|) x '[] = NoConstr
   (>|) x (a ': rest) = (x :>|: a, x >| rest)
-
 
 sumPrism :: (w :>|: a) => Prism' w a 
 sumPrism = prism' lft peek
@@ -101,7 +100,6 @@ instance (Typeable a,  BlankHead rest) => BlankHead (a ': rest) where
   blankHead _ y = unsafeCoerce $ Blank (Proxy :: Proxy a) $ blankHead (Proxy :: Proxy rest) y
 
 
-
 -- | Sum class
 instance {-# INCOHERENT #-} (Typeable c, BlankTail rest) => SumClass (Alt' 'Ahead (c ': rest)) c where
   peek (Cur x _)   = Just x
@@ -115,10 +113,6 @@ instance {-# INCOHERENT #-} (Typeable c, BlankTail rest) => SumClass (Alt' 'Ahea
 instance {-# INCOHERENT #-} (Typeable a, Typeable c, SumClass (Alt' 'Ahead p) c) => SumClass (Alt' 'Ahead (a ': p)) c where
   peek (Blank _ xs) = peek xs
   lft x = Blank (Proxy :: Proxy a) $ lft x
-
-
-
-
 
 
 

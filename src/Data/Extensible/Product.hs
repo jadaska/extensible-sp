@@ -9,17 +9,21 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE PolyKinds #-}
+
 
 module Data.Extensible.Product where
 
 import Control.Lens(Lens', lens)
+import Data.Extensible.Type
 import Data.Promotion.Prelude.List
 import Data.Promotion.TH
 import Data.Monoid 
 import Data.Maybe
 import Data.Typeable
-import GHC.Exts(Constraint)
+
 
 -- | Extensible product typeclass for type
 class ProductClass c s where
@@ -29,8 +33,6 @@ class ProductClass c s where
 -- | Short-hand type operator for product class
 type (c :>&: a)  = (ProductClass c a)
 
-
-type NoConstr = (() :: Constraint)
 
 type family (>&) x p where
   (>&) x '[] = NoConstr
@@ -63,6 +65,108 @@ instance ProductClass (HList rest) c => ProductClass (HList (b ': rest)) c where
 fromHList :: (forall a . Typeable a => a -> b) -> HList p -> [b]
 fromHList _ HNil = []
 fromHList f (HCons x rest) = f x : fromHList f rest
+
+
+
+-- data HKList k p  where
+--   HKCons :: Typeable x => k x -> HKList k xs -> HKList k (x ': xs)
+--   HKNil  :: HKList k '[]
+
+-- instance (Show a, Show (HKList rest)) => Show (HKList (a ': rest)) where
+--   show (HKCons x ys) = show x <> " ++ " <> show ys
+
+-- instance Show (HList '[]) where
+--   show HKNil = "end"
+
+-- instance Typeable c => ProductClass (HList (c ': rest)) c where
+--   grab (HCons x _) = x
+--   stash x (HCons _ rest) = (HCons x rest)
+
+-- instance ProductClass (HList rest) c => ProductClass (HList (b ': rest)) c where
+--   grab (HCons _ rest) = grab rest
+--   stash x (HCons y rest) = HCons y $ stash x rest 
+
+
+-- fromHList :: (forall a . Typeable a => a -> b) -> HList p -> [b]
+-- fromHList _ HNil = []
+-- fromHList f (HCons x rest) = f x : fromHList f rest
+
+
+
+-- | Unique 
+type family Unique xs where
+   Unique '[] = '[]
+   Unique xs = Unique' '[] xs
+
+type family ElemOf x xs where
+  ElemOf _ '[] = 'False
+  ElemOf x (x ': ys) = 'True
+  ElemOf x (y ': ys) = ElemOf x ys
+
+type family Unique' unique xs where
+  Unique' us '[] = us
+  Unique' us (x ': xrest) = Unique' (UniqueOut (ElemOf x us) x us) xrest
+  
+type family UniqueOut b y ys where
+  UniqueOut 'True _ ys = ys
+  UniqueOut 'False y ys = y ': ys
+
+
+class UniqueH p where
+  uniqH :: TypeCastK HList (Unique p) p' => HList p -> HList p'
+
+class ElemOfH x xs where
+  elemOfH :: x -> HList xs -> Bool
+
+class UniqueH' p q where
+  uniqH' :: (TypeCastK HList (Unique' p q) p') => HList p -> HList q -> HList p'
+
+
+instance (TypeCastK HList p (Unique' p '[])) => UniqueH' p '[] where
+  uniqH' x _ = typeCastK x
+
+instance 
+  (
+    UniqueOutH (ElemOf a p) a p, 
+    UniqueH' (UniqueOut (ElemOf a p) a p) rest
+--    TypeCastK HList (Unique' (UniqueOut (ElemOf a p) a p) rest) (Unique' p (a ': rest))
+  ) 
+  => UniqueH' p (a ': rest) where
+  uniqH' us (HCons y rest) = uniqH' us' rest
+    where
+      us' :: HList (UniqueOut (ElemOf a p) a p)
+      us' = uniqueOut (Proxy :: Proxy (ElemOf a p)) y us 
+
+
+class UniqueOutH b y ys where
+  uniqueOut :: (Typeable y, TypeCastK HList (UniqueOut b y ys) yy) => Proxy b ->  y -> HList ys -> HList yy
+
+
+
+-- | Remove 
+type family Remove a p where
+  Remove _ '[] = '[]
+  Remove a (a ': rest) = Remove a rest
+  Remove a (b ': rest) = b ': Remove a rest
+
+class Rmv a p where
+  rmv :: 
+    (
+      TypeCast (HList (Remove a p)) (HList p'), 
+      Typeable a
+    ) => Proxy a -> HList p -> HList p'
+
+instance Rmv a '[] where
+  rmv _ HNil = typeCast HNil
+
+instance Rmv a rest => Rmv a (a ': rest) where
+  rmv pxy (HCons _ rest) = typeCast (rmv pxy rest :: HList (Remove a rest))
+
+
+instance (
+    TypeCastK HList (b ': Remove a rest) (Remove a (b ': rest)), 
+    Rmv a rest) => Rmv a (b ': rest) where
+  rmv pxy (HCons x rest) = typeCast $ (typeCastK $ HCons x (rmv pxy rest :: HList (Remove a rest)) :: HList (Remove a (b ': rest)))
 
 
 class HFilter p where

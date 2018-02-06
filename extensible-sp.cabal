@@ -21,9 +21,11 @@ library
                        , Data.Extensible.Sum2
                        , Data.Extensible.Embeddable
                        , Data.Extensible.Product                       
+                       , Data.Extensible.Type                       
   build-depends:       base >= 4.7 && < 5
                        , lens
                        , singletons
+--                       , HList
   default-language:    Haskell2010
 
 source-repository head
