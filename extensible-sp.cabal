@@ -19,8 +19,10 @@ library
                        , Data.Extensible.Sum
                        , Data.Extensible.Sum1
                        , Data.Extensible.Sum2
+                       , Data.Extensible.Sum2F                       
                        , Data.Extensible.Embeddable
                        , Data.Extensible.Product                       
+                       , Data.Extensible.Product2F                       
                        , Data.Extensible.Type                       
   build-depends:       base >= 4.7 && < 5
                        , lens

@@ -68,7 +68,8 @@ data Alt' k p where
 type Alt p = Alt' 'Ahead p
 
 
-instance (Show a, Show (Alt' 'Behind rest), Show (Alt' 'Ahead rest)) => Show (Alt' 'Ahead (a ': rest)) where
+instance (Show a, Show (Alt' 'Behind rest), Show (Alt' 'Ahead rest)) 
+  => Show (Alt' 'Ahead (a ': rest)) where
   show (Cur x rest) = show x <> " " <> show rest
   show (Blank _ rest) = "* " <> show rest
 
@@ -101,7 +102,8 @@ instance (Typeable a,  BlankHead rest) => BlankHead (a ': rest) where
 
 
 -- | Sum class
-instance {-# INCOHERENT #-} (Typeable c, BlankTail rest) => SumClass (Alt' 'Ahead (c ': rest)) c where
+instance {-# INCOHERENT #-} (Typeable c, BlankTail rest) 
+  => SumClass (Alt' 'Ahead (c ': rest)) c where
   peek (Cur x _)   = Just x
   peek (Blank _ _) = Nothing
   lft x = Cur x blankTail 

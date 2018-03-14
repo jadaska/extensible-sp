@@ -53,11 +53,11 @@ instance (Show a, Show (HList rest)) => Show (HList (a ': rest)) where
 instance Show (HList '[]) where
  show HNil = "end"
 
-instance Typeable c => ProductClass (HList (c ': rest)) c where
+instance {-# INCOHERENT #-} Typeable c => ProductClass (HList (c ': rest)) c where
   grab (HCons x _) = x
   stash x (HCons _ rest) = (HCons x rest)
 
-instance ProductClass (HList rest) c => ProductClass (HList (b ': rest)) c where
+instance {-# INCOHERENT #-} (Typeable c, ProductClass (HList rest) c) => ProductClass (HList (b ': rest)) c where
   grab (HCons _ rest) = grab rest
   stash x (HCons y rest) = HCons y $ stash x rest 
 
@@ -91,7 +91,11 @@ fromHList f (HCons x rest) = f x : fromHList f rest
 -- fromHList _ HNil = []
 -- fromHList f (HCons x rest) = f x : fromHList f rest
 
-
+-- | Concat
+type family (:<>) xs ys where
+  (:<>) xs '[] = xs
+  (:<>) '[] ys = ys
+  (:<>) (x ': xs) ys = x ': (xs :<> ys)
 
 -- | Unique 
 type family Unique xs where
@@ -110,6 +114,9 @@ type family Unique' unique xs where
 type family UniqueOut b y ys where
   UniqueOut 'True _ ys = ys
   UniqueOut 'False y ys = y ': ys
+
+
+
 
 
 class UniqueH p where
@@ -161,6 +168,14 @@ instance Rmv a '[] where
 
 instance Rmv a rest => Rmv a (a ': rest) where
   rmv pxy (HCons _ rest) = typeCast (rmv pxy rest :: HList (Remove a rest))
+
+
+-- | Set Diff
+type family (:-) p q where
+  (:-) p '[] = p
+  (:-) '[] q = '[]
+  (:-) p (a ': rest) = (Remove a p) :- rest
+
 
 
 instance (
