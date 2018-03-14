@@ -261,7 +261,18 @@ instance (Typeable k, HK2Filter k rest) => HK2Filter k ((a,b) ': rest) where
 
 
 
+type family HK2AppendR (xs :: [*]) (ys :: [*]) :: [*]
+type instance HK2AppendR '[] xs = xs
+type instance HK2AppendR (x ': xs) ys = x ': HK2AppendR xs ys 
 
+class HK2Append l1 l2 where
+  hk2Append :: HK2List k l1 -> HK2List k l2 -> HK2List k (HK2AppendR l1 l2)
+
+instance HK2Append '[] l2 where
+  hk2Append HK2Nil l = l
+
+instance HK2Append l l' => HK2Append (x ': l) l' where
+  hk2Append (HK2Cons x l) l' = HK2Cons x (hk2Append l l')
 
 -- | Legacy product data type
 data (a :&: b) = Prod a b deriving Show
