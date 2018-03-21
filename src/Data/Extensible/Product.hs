@@ -14,9 +14,11 @@
 {-# LANGUAGE PolyKinds #-}
 
 
+
 module Data.Extensible.Product where
 
 import Control.Lens(Lens', lens)
+import Control.Monad
 import Data.Extensible.Type
 import Data.Promotion.Prelude.List
 import Data.Promotion.TH
@@ -228,6 +230,16 @@ hk1filter (HK1Cons x rest) = fromMaybe (hk1filter rest) $ do
 data HK2List k p  where
   HK2Cons :: (Typeable a, Typeable b) => k a b -> HK2List k xs -> HK2List k ((a,b) ': xs)
   HK2Nil  :: HK2List k '[]
+
+class HK2Find p where
+  hk2find :: (Typeable a, Typeable b, Typeable k) => HK2List k p -> Maybe (k a b)
+
+instance HK2Find '[] where
+  hk2find _ = Nothing
+
+instance (Typeable c, Typeable d, HK2Find rest) => HK2Find ((c,d) ': rest) where
+  hk2find (HK2Cons (k :: k c d)  rest) = (cast k) `mplus` (hk2find rest) 
+
 
 
 instance (Typeable a, Typeable b) => ProductClass (HK2List k ((a,b) ': rest)) (k a b) where

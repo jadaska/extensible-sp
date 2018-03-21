@@ -30,6 +30,9 @@ data Alt2' k (p ::[* -> * -> *]) a b where
 type Alt2 p a b = Alt2' 'Ahead p a b
 
 
+unpack2 :: Alt2 '[f] a b -> f a b
+unpack2 (Cur2 f _) = f
+
 instance (Show (a b c), Show (Alt2' 'Behind rest b c), Show (Alt2' 'Ahead rest b c)) 
   => Show (Alt2' 'Ahead (a ': rest) b c) where
   show (Cur2 x rest) = show x <> " " <> show rest
@@ -93,6 +96,39 @@ instance
     lft2' _ x = Blank2 (Proxy :: Proxy a) $ lft2 x
 
 
+class Embed2 (p :: [* -> * -> *]) q m where
+  embed2 :: m p a b -> m q a b
+
+class Embed2' (flag :: Bool) (p :: [* -> * -> *]) q m where
+  embed2' :: Proxy flag -> m p a b -> m q a b
+
+-- type family SubsetOf (a :: * -> * -> *) q where
+  -- SubsetOf _ '[] = 'False
+  -- SubsetOf a (a ': rest) = 'True
+  -- SubsetOf b (a ': rest) = SubsetOf b rest
+
+
+instance (ElemIn2 a q ~ flag, Embed2' flag (a ': rest) q m) => Embed2 (a ': rest) q m where
+  embed2 = embed2' (Proxy :: Proxy flag)
+
+
+-- instance (Embed2 rest q (Alt2' 'Ahead)) => Embed2' 'False (a ': rest) q (Alt2' 'Ahead) where
+  -- embed2' _ (Cur2 x _) = Nothing
+  -- embed2' _ (Blank2 _ rest) = embed2 rest
+
+instance {-# INCOHERENT #-} (Sum2 (Alt2' 'Ahead q) a, Embed2 rest q (Alt2' 'Ahead)) 
+  => Embed2' 'True (a ': rest) q (Alt2' 'Ahead) where
+  embed2' _ (Cur2 x _)      = lft2 x
+  embed2' _ (Blank2 _ rest) = embed2 rest
+
+instance {-# INCOHERENT #-} (Sum2 (Alt2' 'Ahead q) a) 
+  => Embed2' 'True '[a] q (Alt2' 'Ahead) where
+  embed2' _ (Cur2 x _)      = lft2 x
+--  embed2' _ (Blank2 _ rest) = embed2 rest
+
+
+
+-- | project 
 class Project2 (p :: [* -> * -> *]) q m where
   project2 :: m p a b -> Maybe (m q a b)
 
