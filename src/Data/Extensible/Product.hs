@@ -244,7 +244,19 @@ instance HK2Find '[] where
 instance (Typeable c, Typeable d, HK2Find rest) => HK2Find ((c,d) ': rest) where
   hk2find (HK2Cons (k :: k c d)  rest) = (cast k) `mplus` (hk2find rest) 
 
+class HK2Hoist p where
+  hk2hoist :: (forall a b . k a b -> k' a b) -> HK2List k p -> HK2List k' p
 
+instance HK2Hoist '[] where
+  hk2hoist _ HK2Nil = HK2Nil
+
+instance (Typeable c, Typeable d, HK2Hoist rest) => HK2Hoist ((c,d) ': rest) where
+  hk2hoist fxn (HK2Cons (k :: k c d)  rest) =  HK2Cons (fxn k) $ hk2hoist fxn rest
+
+
+infixr 5 <$$>
+(<$$>) :: HK2Hoist p => (forall a b . k a b -> k' a b) -> HK2List k p -> HK2List k' p
+(<$$>) = hk2hoist
 
 instance (Typeable a, Typeable b) => ProductClass (HK2List k ((a,b) ': rest)) (k a b) where
   grab (HK2Cons x _)       = x
