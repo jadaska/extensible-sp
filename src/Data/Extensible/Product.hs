@@ -231,6 +231,9 @@ data HK2List k p  where
   HK2Cons :: (Typeable a, Typeable b) => k a b -> HK2List k xs -> HK2List k ((a,b) ': xs)
   HK2Nil  :: HK2List k '[]
 
+(<:>) :: (Typeable a, Typeable b) => k a b -> HK2List k xs -> HK2List k ((a,b) ': xs)
+(<:>) = HK2Cons
+
 class HK2Find p where
   hk2find :: (Typeable a, Typeable b, Typeable k) => HK2List k p -> Maybe (k a b)
 
