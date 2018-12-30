@@ -11,7 +11,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE GADTs #-}
-
+{-# LANGUAGE RankNTypes #-}
 module Data.Extensible.Sum where
 
 import Data.Typeable
@@ -67,8 +67,39 @@ data Alt' (constr :: * -> Constraint) k p where
 class Empty x
 instance Empty x
 
-
 type Alt p = Alt' Empty 'Ahead p
+
+-- | MapAlt provides functions that allow exploiting the constraint
+-- of the alternative without having to know the specific types in the
+-- typelist
+class MapConstrAlt constr p where
+  mapConstrAlt :: (forall a . constr a => a -> b) -> Alt' constr 'Ahead p -> b
+
+instance MapConstrAlt constr xs => MapConstrAlt constr (x ': xs) where
+  mapConstrAlt f (Cur z _) = f z
+  mapConstrAlt f (Blank _ rest) = mapConstrAlt f rest
+
+-- | instance to end the recursion.  This is not
+-- as unsafe as it seems since (Alt' constr 'Ahead '[] is not possible to create)
+instance MapConstrAlt constr '[] where
+  mapConstrAlt f _ = undefined
+
+class LiftConstrAlt constr p where
+  liftConstrAlt :: MonadPlus m => (forall a . (Typeable a, constr a) => Proxy a -> m a)
+                               -> m (Alt' constr 'Ahead p)
+
+instance (constr x, Typeable x, BlankTail constr xs, LiftConstrAlt constr xs) => LiftConstrAlt constr (x ': xs) where
+  liftConstrAlt f = thisOne `mplus` nextOne
+    where
+      thisOne = do
+        z <- f (Proxy :: Proxy x)
+        return $ Cur z blankTail
+      nextOne = do
+        z <- liftConstrAlt f
+        return $ Blank (Proxy :: Proxy x) z
+
+instance LiftConstrAlt constr '[] where
+  liftConstrAlt f = mzero
 
 
 instance (Show a, Show (Alt' constr 'Behind rest), Show (Alt' constr 'Ahead rest))
