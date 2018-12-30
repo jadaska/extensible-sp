@@ -19,8 +19,6 @@ import Control.Lens(prism', Prism')
 import Control.Monad
 import Data.Monoid((<>))
 import Data.Promotion.Prelude.List
--- import Data.Promotion.TH
-import Data.Typeable
 import GHC.Exts(Constraint)
 import Data.Extensible.Type
 import Unsafe.Coerce(unsafeCoerce)
@@ -38,7 +36,7 @@ type family (>|) x p where
   (>|) x '[] = NoConstr
   (>|) x (a ': rest) = (x :>|: a, x >| rest)
 
-sumPrism :: (w :>|: a) => Prism' w a 
+sumPrism :: (w :>|: a) => Prism' w a
 sumPrism = prism' lft peek
 
 -- | Standard SumClass definitions
@@ -60,59 +58,70 @@ instance SumClass (Either a b) b where
 
 data AltLoc = Behind | Ahead
 
-data Alt' k p where
-  Blank  :: Typeable x => Proxy x -> Alt' k xs -> Alt' k (x ': xs)
-  Cur    :: Typeable x => x -> Alt' 'Behind xs -> Alt' 'Ahead (x ': xs)
-  ANil   :: Alt' 'Behind '[]
-
-type Alt p = Alt' 'Ahead p
+data Alt' (constr :: * -> Constraint) k p where
+  Blank  :: (constr x, Typeable x) => Proxy x -> Alt' constr k xs -> Alt' constr k (x ': xs)
+  Cur    :: (constr x, Typeable x) => x -> Alt' constr 'Behind xs -> Alt' constr 'Ahead (x ': xs)
+  ANil   :: Alt' constr 'Behind '[]
 
 
-instance (Show a, Show (Alt' 'Behind rest), Show (Alt' 'Ahead rest)) 
-  => Show (Alt' 'Ahead (a ': rest)) where
+class Empty x
+instance Empty x
+
+
+type Alt p = Alt' Empty 'Ahead p
+
+
+instance (Show a, Show (Alt' constr 'Behind rest), Show (Alt' constr 'Ahead rest))
+  => Show (Alt' constr 'Ahead (a ': rest)) where
   show (Cur x rest) = show x <> " " <> show rest
   show (Blank _ rest) = "* " <> show rest
 
-instance Show (Alt' 'Behind rest) => Show (Alt' 'Behind (a ': rest)) where
-  show (Blank p rest) = "* " <> show rest
+instance Show (Alt' constr 'Behind rest) => Show (Alt' constr 'Behind (a ': rest)) where
+  show (Blank _ rest) = "* " <> show rest
 
-instance Show (Alt' k '[]) where
+instance Show (Alt' constr k '[]) where
   show _ = ""
 
 
 -- | blank tail/head for handling Alt
-class BlankTail p where
-  blankTail :: Alt' 'Behind p
+class BlankTail constr p where
+  blankTail :: Alt' constr 'Behind p
 
-instance BlankTail '[] where
+instance BlankTail constr '[] where
   blankTail = ANil
 
-instance (Typeable a, BlankTail rest) => BlankTail (a ': rest) where
+instance (constr a, Typeable a, BlankTail constr rest) => BlankTail constr (a ': rest) where
   blankTail = Blank (Proxy :: Proxy a) $ blankTail
 
 
-class BlankHead p where
-  blankHead :: Proxy p -> Alt' 'Ahead q -> Alt' 'Ahead (p :++ q)
+class BlankHead constr p where
+  blankHead :: Proxy p -> Alt' constr 'Ahead q -> Alt' constr 'Ahead (p :++ q)
 
-instance BlankHead '[] where
+instance BlankHead constr '[] where
   blankHead _ y = unsafeCoerce y
 
-instance (Typeable a,  BlankHead rest) => BlankHead (a ': rest) where
+instance (constr a, Typeable a,  BlankHead constr rest) => BlankHead constr (a ': rest) where
   blankHead _ y = unsafeCoerce $ Blank (Proxy :: Proxy a) $ blankHead (Proxy :: Proxy rest) y
 
 
 -- | Sum class
-instance {-# INCOHERENT #-} (Typeable c, BlankTail rest) 
-  => SumClass (Alt' 'Ahead (c ': rest)) c where
+instance {-# INCOHERENT #-} (constr c, Typeable c, BlankTail constr rest)
+  => SumClass (Alt' constr 'Ahead (c ': rest)) c where
   peek (Cur x _)   = Just x
   peek (Blank _ _) = Nothing
-  lft x = Cur x blankTail 
+  lft x = Cur x blankTail
 
 -- instance Typeable c => SumClass (Alt' 'Ahead '[c]) c where
 --    peek (Cur x _)  = Just x
---    lft x = Cur x ANil -- HLast x 
+--    lft x = Cur x ANil -- HLast x
 
-instance {-# INCOHERENT #-} (Typeable a, Typeable c, SumClass (Alt' 'Ahead p) c) => SumClass (Alt' 'Ahead (a ': p)) c where
+instance {-# INCOHERENT #-}
+  ( constr a
+  , Typeable a
+  , constr c
+  , Typeable c
+  , SumClass (Alt' constr 'Ahead p) c
+  ) => SumClass (Alt' constr 'Ahead (a ': p)) c where
   peek (Blank _ xs) = peek xs
   lft x = Blank (Proxy :: Proxy a) $ lft x
 
@@ -132,7 +141,7 @@ instance (Show a, Show b) => Show (a :|: b) where
 
 
 -- instance (Ord a, Ord b) => Ord (a :|: b) where
---   compare x y 
+--   compare x y
 --     | Just (x1 :: a) <- peek x,
 --       Just (y1 :: a) <- peek y = compare x1 y1
 
@@ -156,7 +165,3 @@ instance {-# INCOHERENT #-} (SumClass c a) => SumClass (c :|: b) a where
   peek (DataL x) = peek x
   peek _ = Nothing
   lft = DataL . lft
-
-
-
-
