@@ -11,6 +11,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE GADTs #-}
+
+{-# LANGUAGE UndecidableSuperClasses #-}
 {-# LANGUAGE RankNTypes #-}
 module Data.Extensible.Sum where
 
@@ -54,6 +56,11 @@ instance SumClass (Either a b) b where
    lft  = Right
 
 
+type family ElemIn (a :: *) (q :: [*]) where
+  ElemIn _ '[] = 'False
+  ElemIn a (a ': rest) = 'True
+  ElemIn b (a ': rest) = ElemIn b rest
+
 -- | Alt p  generic sum type parameterized by a type list p
 
 data AltLoc = Behind | Ahead
@@ -66,6 +73,11 @@ data Alt' (constr :: * -> Constraint) k p where
 
 class Empty x
 instance Empty x
+
+class    (c a, d a) => (c :&: d) a
+instance (c a, d a) => (c :&: d) a
+infixl 7 :&:
+
 
 type Alt p = Alt' Empty 'Ahead p
 
