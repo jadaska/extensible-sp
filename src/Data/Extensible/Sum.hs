@@ -166,6 +166,8 @@ instance {-# INCOHERENT #-}
   , SumClass (Alt' constr 'Ahead p) c
   ) => SumClass (Alt' constr 'Ahead (a ': p)) c where
   peek (Blank _ xs) = peek xs
+  peek (Cur x _) = cast x
+    
   lft x = Blank (Proxy :: Proxy a) $ lft x
 
 

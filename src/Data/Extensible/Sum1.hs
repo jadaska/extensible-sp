@@ -49,6 +49,7 @@ instance (Ord1 f, Ord1 g) => Ord1 (f :||: g) where
     | Just (x :: g a) <- peek1 x,
       Just (y :: f b) <- peek1 y = GT
 
+    | otherwise = LT
 
 
 

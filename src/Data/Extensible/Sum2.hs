@@ -32,6 +32,7 @@ type Alt2 p a b = Alt2' 'Ahead p a b
 
 unpack2 :: Alt2 '[f] a b -> f a b
 unpack2 (Cur2 f _) = f
+unpack2 _ = undefined
 
 instance (Show (a b c), Show (Alt2' 'Behind rest b c), Show (Alt2' 'Ahead rest b c)) 
   => Show (Alt2' 'Ahead (a ': rest) b c) where
@@ -101,7 +102,7 @@ class Embed2 (p :: [* -> * -> *]) q m where
 
 class Embed2' (flag :: Bool) (p :: [* -> * -> *]) q m where
   embed2' :: Proxy flag -> m p a b -> m q a b
-
+  
 -- type family SubsetOf (a :: * -> * -> *) q where
   -- SubsetOf _ '[] = 'False
   -- SubsetOf a (a ': rest) = 'True
@@ -124,6 +125,7 @@ instance {-# INCOHERENT #-} (Sum2 (Alt2' 'Ahead q) a, Embed2 rest q (Alt2' 'Ahea
 instance {-# INCOHERENT #-} (Sum2 (Alt2' 'Ahead q) a) 
   => Embed2' 'True '[a] q (Alt2' 'Ahead) where
   embed2' _ (Cur2 x _)      = lft2 x
+  embed2' _ _ = undefined
 --  embed2' _ (Blank2 _ rest) = embed2 rest
 
 
@@ -169,7 +171,7 @@ instance
     | Just y <- peek2 x,
       Just z <- project2 (fxn y) = z
     | Just z <- project2 x       = z
-
+    | otherwise = undefined
 
 data F2 a b = F2 deriving Show
 data G2 a b = G2 deriving Show
