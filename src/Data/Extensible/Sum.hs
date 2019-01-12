@@ -16,6 +16,8 @@
 {-# LANGUAGE RankNTypes #-}
 module Data.Extensible.Sum where
 
+
+import Data.Constraints.Utility
 import Data.Typeable
 import Control.Lens(prism', Prism')
 import Control.Monad
@@ -69,14 +71,6 @@ data Alt' (constr :: * -> Constraint) k p where
   Blank  :: (constr x, Typeable x) => Proxy x -> Alt' constr k xs -> Alt' constr k (x ': xs)
   Cur    :: (constr x, Typeable x) => x -> Alt' constr 'Behind xs -> Alt' constr 'Ahead (x ': xs)
   ANil   :: Alt' constr 'Behind '[]
-
-
-class Empty x
-instance Empty x
-
-class    (c a, d a) => (c :&: d) a
-instance (c a, d a) => (c :&: d) a
-infixl 7 :&:
 
 
 type Alt p = Alt' Empty 'Ahead p
